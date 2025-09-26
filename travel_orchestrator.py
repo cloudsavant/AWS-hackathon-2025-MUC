@@ -22,7 +22,7 @@ class TravelOrchestratorAgent:
     
     def __init__(self):
         self.bedrock_client = boto3.client('bedrock-runtime', region_name='us-west-2')
-        self.model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
+        self.model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
         
     def parse_trip_request(self, user_input: str) -> Dict[str, Any]:
         """Parse user input into structured trip request"""
@@ -137,6 +137,7 @@ class TravelOrchestratorAgent:
     
     def generate_ai_summary(self, trip_plan_data: Dict[str, Any], user_input: str) -> str:
         """Use Bedrock LLM to generate a natural language summary of the trip plan"""
+        print(f"🤖 Starting AI summary generation with model: {self.model_id}")
         try:
             # Extract key information for the prompt
             destination = trip_plan_data["trip_plan"]["request"]["destination"]
@@ -195,9 +196,13 @@ Write in a friendly, professional tone as if you're personally excited to help t
             return ai_summary
             
         except Exception as e:
-            # Fallback to basic message if LLM call fails
-            print(f"LLM call failed: {e}")
-            return f"Generated complete trip plan for {trip_plan_data['trip_plan']['request']['destination']} ({trip_plan_data['trip_plan']['itinerary']['duration']}). Total estimated cost: ${trip_plan_data['trip_plan']['itinerary']['total_cost']}"
+            # Fallback to basic message if LLM call fails - include error details for debugging
+            error_msg = f"LLM call failed: {type(e).__name__}: {str(e)}"
+            print(error_msg)
+            import traceback
+            print(f"Full traceback: {traceback.format_exc()}")
+            # Return error details in the fallback message for debugging
+            return f"Generated complete trip plan for {trip_plan_data['trip_plan']['request']['destination']} ({trip_plan_data['trip_plan']['itinerary']['duration']}). Total estimated cost: ${trip_plan_data['trip_plan']['itinerary']['total_cost']} [DEBUG: {error_msg}]"
 
 # Create agent instance
 orchestrator = TravelOrchestratorAgent()

@@ -21,7 +21,7 @@ agents:
     bedrock_agentcore:
       agent_id: travel_orchestrator-BVUvNxBN5c
       agent_arn: arn:aws:bedrock-agentcore:us-west-2:362485256406:runtime/travel_orchestrator-BVUvNxBN5c
-      agent_session_id: 19c807ca-f041-48a2-810f-92636867cb3b
+      agent_session_id: 8f77be18-5429-4228-ba56-ac19b83b9489
     codebuild:
       project_name: bedrock-agentcore-travel_orchestrator-builder
       execution_role: arn:aws:iam::362485256406:role/AmazonBedrockAgentCoreSDKCodeBuild-us-west-2-a1ca5aeec4

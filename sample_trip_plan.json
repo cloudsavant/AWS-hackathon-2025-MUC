@@ -1,0 +1,158 @@
+{
+  "request": {
+    "destination": "Munich, Germany",
+    "dates": {
+      "start_date": "2024-09-21",
+      "end_date": "2024-09-24"
+    },
+    "budget": 1200,
+    "interests": [
+      "Oktoberfest",
+      "beer",
+      "traditional food",
+      "history"
+    ]
+  },
+  "transportation": [
+    {
+      "option_id": "flight_001",
+      "price": 450,
+      "duration": "2h 30m",
+      "departure": "10:30",
+      "arrival": "13:00",
+      "booking_link": "https://example.com/book/flight_001"
+    }
+  ],
+  "accommodation": [
+    {
+      "option_id": "hotel_001",
+      "name": "Munich City Hotel",
+      "price": 120,
+      "check_in": "2024-09-21",
+      "check_out": "2024-09-24",
+      "rating": 4.2,
+      "booking_link": "https://example.com/book/hotel_001"
+    }
+  ],
+  "activities": [
+    {
+      "activity_id": "act_001",
+      "name": "Marienplatz Historical Tour",
+      "description": "Guided tour of Munich's historic city center",
+      "time_slots": [
+        "10:00",
+        "14:00",
+        "16:00"
+      ],
+      "price": 25,
+      "location": "Marienplatz",
+      "rating": 4.6
+    },
+    {
+      "activity_id": "act_002",
+      "name": "Hofbr\u00e4u Beer Garden",
+      "description": "Traditional Bavarian beer garden experience",
+      "time_slots": [
+        "12:00",
+        "17:00",
+        "19:00"
+      ],
+      "price": 15,
+      "location": "Hofbr\u00e4u M\u00fcnchen",
+      "rating": 4.4
+    }
+  ],
+  "itinerary": {
+    "destination": "Munich, Germany",
+    "duration": "4 days",
+    "total_estimated_cost": 1090,
+    "daily_plan": [
+      {
+        "date": "2024-09-21",
+        "day_name": "Saturday",
+        "activities": [
+          {
+            "time": "10:00",
+            "activity": "Marienplatz Historical Tour",
+            "location": "Marienplatz",
+            "price": 25
+          },
+          {
+            "time": "12:00",
+            "activity": "Hofbr\u00e4u Beer Garden",
+            "location": "Hofbr\u00e4u M\u00fcnchen",
+            "price": 15
+          }
+        ],
+        "accommodation": "Munich City Hotel"
+      },
+      {
+        "date": "2024-09-22",
+        "day_name": "Sunday",
+        "activities": [
+          {
+            "time": "10:00",
+            "activity": "Marienplatz Historical Tour",
+            "location": "Marienplatz",
+            "price": 25
+          },
+          {
+            "time": "12:00",
+            "activity": "Hofbr\u00e4u Beer Garden",
+            "location": "Hofbr\u00e4u M\u00fcnchen",
+            "price": 15
+          }
+        ],
+        "accommodation": "Munich City Hotel"
+      },
+      {
+        "date": "2024-09-23",
+        "day_name": "Monday",
+        "activities": [
+          {
+            "time": "10:00",
+            "activity": "Marienplatz Historical Tour",
+            "location": "Marienplatz",
+            "price": 25
+          },
+          {
+            "time": "12:00",
+            "activity": "Hofbr\u00e4u Beer Garden",
+            "location": "Hofbr\u00e4u M\u00fcnchen",
+            "price": 15
+          }
+        ],
+        "accommodation": "Munich City Hotel"
+      },
+      {
+        "date": "2024-09-24",
+        "day_name": "Tuesday",
+        "activities": [
+          {
+            "time": "10:00",
+            "activity": "Marienplatz Historical Tour",
+            "location": "Marienplatz",
+            "price": 25
+          },
+          {
+            "time": "12:00",
+            "activity": "Hofbr\u00e4u Beer Garden",
+            "location": "Hofbr\u00e4u M\u00fcnchen",
+            "price": 15
+          }
+        ],
+        "accommodation": "Munich City Hotel"
+      }
+    ]
+  },
+  "user_memory": {
+    "budget": 1200,
+    "interests": [
+      "Oktoberfest",
+      "beer",
+      "traditional food",
+      "history"
+    ],
+    "last_destination": "Munich, Germany"
+  }
+}

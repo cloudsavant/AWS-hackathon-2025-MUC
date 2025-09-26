@@ -22,8 +22,9 @@ class TripRequest:
 
 class MockFlightsHotelsAgent:
     """Mock implementation of Flights & Hotels Agent"""
-    
+
     def search_flights_hotels(self, request: TripRequest) -> Dict[str, Any]:
+        """Search for flights and hotels based on trip request"""
         # Simulate API call to Skyscanner/Booking
         return {
             "flights": [
@@ -38,7 +39,7 @@ class MockFlightsHotelsAgent:
             ],
             "hotels": [
                 {
-                    "option_id": "hotel_001", 
+                    "option_id": "hotel_001",
                     "name": "Munich City Hotel",
                     "price": 120,
                     "check_in": request.dates["start_date"],

@@ -1,0 +1,31 @@
+default_agent: travel_orchestrator
+agents:
+  travel_orchestrator:
+    name: travel_orchestrator
+    entrypoint: travel_orchestrator.py
+    platform: linux/arm64
+    container_runtime: docker
+    aws:
+      execution_role: arn:aws:iam::362485256406:role/AmazonBedrockAgentCoreSDKRuntime-us-west-2-a1ca5aeec4
+      execution_role_auto_create: false
+      account: '362485256406'
+      region: us-west-2
+      ecr_repository: 362485256406.dkr.ecr.us-west-2.amazonaws.com/bedrock-agentcore-travel_orchestrator
+      ecr_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+    bedrock_agentcore:
+      agent_id: travel_orchestrator-BVUvNxBN5c
+      agent_arn: arn:aws:bedrock-agentcore:us-west-2:362485256406:runtime/travel_orchestrator-BVUvNxBN5c
+      agent_session_id: null
+    codebuild:
+      project_name: bedrock-agentcore-travel_orchestrator-builder
+      execution_role: arn:aws:iam::362485256406:role/AmazonBedrockAgentCoreSDKCodeBuild-us-west-2-a1ca5aeec4
+      source_bucket: bedrock-agentcore-codebuild-sources-362485256406-us-west-2
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration: null

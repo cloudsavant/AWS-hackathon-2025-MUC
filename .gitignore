@@ -1,0 +1,5 @@
+agentcore-env/lib64
+agentcore-env/pyvenv.cfg
+agentcore-env/bin/python
+agentcore-env/bin/python3
+agentcore-env/bin/python3.12

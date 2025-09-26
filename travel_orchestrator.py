@@ -196,13 +196,9 @@ Write in a friendly, professional tone as if you're personally excited to help t
             return ai_summary
             
         except Exception as e:
-            # Fallback to basic message if LLM call fails - include error details for debugging
-            error_msg = f"LLM call failed: {type(e).__name__}: {str(e)}"
-            print(error_msg)
-            import traceback
-            print(f"Full traceback: {traceback.format_exc()}")
-            # Return error details in the fallback message for debugging
-            return f"Generated complete trip plan for {trip_plan_data['trip_plan']['request']['destination']} ({trip_plan_data['trip_plan']['itinerary']['duration']}). Total estimated cost: ${trip_plan_data['trip_plan']['itinerary']['total_cost']} [DEBUG: {error_msg}]"
+            # Fallback to basic message if LLM call fails
+            print(f"LLM call failed: {type(e).__name__}: {str(e)}")
+            return f"🎯 I've created a wonderful {trip_plan_data['trip_plan']['itinerary']['duration']} trip to {trip_plan_data['trip_plan']['request']['destination']} for you! Total estimated cost: ${trip_plan_data['trip_plan']['itinerary']['total_cost']}. Your adventure includes flights, hotel accommodation, and exciting activities perfectly matched to your interests."
 
 # Create agent instance
 orchestrator = TravelOrchestratorAgent()
@@ -220,26 +216,60 @@ def invoke_handler(payload):
         activities = orchestrator.call_activities_agent(trip_request)
         itinerary = orchestrator.call_itinerary_agent(flights_hotels, activities, trip_request)
         
-        # Step 3: Format response
-        response = {
+        # Step 3: Generate AI-powered natural language summary using Bedrock
+        temp_response = {
             "trip_plan": {
                 "request": trip_request,
                 "transportation": flights_hotels["flights"],
                 "accommodation": flights_hotels["hotels"],
                 "activities": activities["activities"],
                 "itinerary": itinerary
-            },
-            "message": f"Generated complete trip plan for {itinerary['destination']} ({itinerary['duration']}). Total estimated cost: ${itinerary['total_cost']}"
+            }
         }
         
-        # Step 4: Generate AI-powered natural language summary using Bedrock
+        ai_summary = ""
         try:
-            ai_summary = orchestrator.generate_ai_summary(response, user_input)
-            response["ai_summary"] = ai_summary
+            ai_summary = orchestrator.generate_ai_summary(temp_response, user_input)
             print(f"✅ AI Summary generated successfully")
         except Exception as e:
             print(f"⚠️ AI Summary generation failed: {e}")
-            # Continue with basic response
+            ai_summary = f"🎯 Trip planned for {itinerary['destination']} ({itinerary['duration']}) - Total cost: ${itinerary['total_cost']}"
+        
+        # Step 4: Format user-friendly response
+        response = {
+            "status": "success",
+            "summary": ai_summary,
+            "trip_overview": {
+                "destination": trip_request["destination"],
+                "dates": f"{trip_request['start_date']} to {trip_request['end_date']}",
+                "duration": itinerary["duration"],
+                "travelers": trip_request["travelers"],
+                "budget": f"${trip_request['budget']}",
+                "estimated_cost": f"${itinerary['total_cost']}",
+                "savings": f"${max(0, trip_request['budget'] - itinerary['total_cost'])}"
+            },
+            "flight": flights_hotels["flights"][0] if flights_hotels["flights"] else None,
+            "hotel": flights_hotels["hotels"][0] if flights_hotels["hotels"] else None,
+            "activities": [
+                {
+                    "name": act["name"],
+                    "location": act["location"],
+                    "price": f"${act['price']}",
+                    "rating": f"⭐ {act['rating']}"
+                } for act in activities["activities"]
+            ],
+            "daily_schedule": [
+                {
+                    "date": day["date"],
+                    "day": day["day_name"],
+                    "activities": [
+                        f"{act['time']} - {act['activity']} at {act['location']} (${act['price']})"
+                        for act in day["activities"]
+                    ]
+                } for day in itinerary["daily_plan"]
+            ],
+            "raw_data": temp_response  # Keep original structure for debugging
+        }
         
         return response
         

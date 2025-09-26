@@ -49,7 +49,7 @@ User: "Plan Munich trip for Oktoberfest" → [AI Orchestrator] → Sub-Agents:
 > "Travel planning is painful - hours spent juggling flights, hotels, activities. What if AI could plan your entire trip in seconds?"
 
 **[20s] Development Story:**
-> "Here's what's unique: this entire system was built WITH AI assistance. Using Claude Code with AWS's MCP server, we went from concept to production deployment in just 4 hours. This demonstrates AI-accelerated development in action."
+> "Here's what's unique: this entire system was built WITH AI assistance. Using Claude Code with AWS's MCP server, we went from concept to production deployment in just 2.5 hours. This demonstrates AI-accelerated development in action."
 
 **[15s] Technical Achievement:**
 > "The result: a sophisticated multi-agent system on AWS Bedrock AgentCore. One orchestrator coordinates three specialized agents - flights, activities, and itinerary planning. All deployed serverless with sub-second responses."
@@ -67,7 +67,7 @@ User: "Plan Munich trip for Oktoberfest" → [AI Orchestrator] → Sub-Agents:
 3. **Production Ready**: Live deployment with enterprise monitoring
 
 ### Supporting Stats:
-- 🕐 4 hours: Concept to production
+- 🕐 2.5 hours: Concept to production
 - ⚡ <1 second: Response time  
 - 🏗️ 4 agents: Orchestrated system
 - ☁️ AWS: Bedrock AgentCore deployment

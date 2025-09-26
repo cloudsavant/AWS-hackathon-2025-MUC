@@ -3,3 +3,7 @@ agentcore-env/pyvenv.cfg
 agentcore-env/bin/python
 agentcore-env/bin/python3
 agentcore-env/bin/python3.12
+presentation/markdown-presentation.html
+presentation/markdown-parser.js
+presentation/chapter-0-llm-rag-fundamentals.md
+presentation/example.md

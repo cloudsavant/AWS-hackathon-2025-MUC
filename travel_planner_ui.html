@@ -530,11 +530,13 @@
             
             try {
                 // Execute the agentcore command
+                console.log('🎯 About to call executeAgentCore with prompt:', prompt);
                 const response = await executeAgentCore(prompt);
+                console.log('🎉 Got response from executeAgentCore, calling displayResults');
                 displayResults(response, destination, startDate, endDate);
             } catch (error) {
-                showError('Failed to generate travel plan. Please try again.');
-                console.error('Error:', error);
+                console.error('💥 Form submission error:', error);
+                showError(`Failed to generate travel plan: ${error.message}`);
             } finally {
                 document.getElementById('loadingSection').style.display = 'none';
                 document.getElementById('generateBtn').disabled = false;
@@ -542,62 +544,149 @@
         });
 
         async function executeAgentCore(prompt) {
-            // Send the request to our backend server
-            const response = await fetch('/api/generate-plan', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    prompt: prompt
-                })
-            });
+            console.log('🚀 Sending request with prompt:', prompt);
+            
+            try {
+                // Send the request to our backend server
+                const response = await fetch('/api/generate-plan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt
+                    })
+                });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                console.log('📡 Response status:', response.status, response.statusText);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Error response:', errorText);
+                    let errorData;
+                    try {
+                        errorData = JSON.parse(errorText);
+                    } catch (e) {
+                        errorData = { error: errorText };
+                    }
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('✅ Received data:', data);
+                return data;
+                
+            } catch (error) {
+                console.error('🔥 executeAgentCore error:', error);
+                throw error;
             }
-
-            return await response.json();
         }
 
         function displayResults(data, destination, startDate, endDate) {
+            console.log('🎨 displayResults called with data:', data);
+            
             const resultsSection = document.getElementById('resultsSection');
             const resultsContent = document.getElementById('resultsContent');
             
-            // Handle different response formats
+            // Handle the actual response format from your agentcore
             let tripData;
             let aiSummary;
             
+            // Your agentcore returns a top-level structure with trip_overview, activities, etc.
+            // and also has raw_data.trip_plan for the detailed structure
             if (data.raw_data && data.raw_data.trip_plan) {
-                // New format with raw_data
+                console.log('📋 Using raw_data.trip_plan format');
                 tripData = data.raw_data.trip_plan;
                 aiSummary = data.summary || 'Trip plan generated successfully!';
             } else if (data.trip_plan) {
-                // Original format
+                console.log('📋 Using direct trip_plan format');
                 tripData = data.trip_plan;
-                aiSummary = data.ai_summary || 'Trip plan generated successfully!';
+                aiSummary = data.ai_summary || data.summary || 'Trip plan generated successfully!';
+            } else if (data.trip_overview) {
+                // Use the top-level data structure from your agentcore response
+                console.log('📋 Using agentcore top-level format');
+                
+                // Extract cost properly
+                const estimatedCost = data.trip_overview.estimated_cost || '$0';
+                const costNumber = estimatedCost.replace('$', '').replace(',', '');
+                
+                // Extract budget properly  
+                const budgetStr = data.trip_overview.budget || '$0';
+                const budgetNumber = budgetStr.replace('$', '').replace(',', '');
+                
+                tripData = {
+                    request: {
+                        destination: data.trip_overview.destination || destination,
+                        budget: budgetNumber,
+                        travelers: data.trip_overview.travelers || 1
+                    },
+                    itinerary: {
+                        destination: data.trip_overview.destination || destination,
+                        duration: data.trip_overview.duration || '3 days',
+                        total_cost: costNumber
+                    },
+                    transportation: data.flight ? [data.flight] : [],
+                    accommodation: data.hotel ? [data.hotel] : [],
+                    activities: data.activities || [],
+                    daily_plan: data.daily_schedule || []
+                };
+                aiSummary = data.summary || 'Trip plan generated successfully!';
             } else {
-                // Fallback
-                tripData = data;
+                console.log('📋 Using fallback format');
+                tripData = {
+                    request: {
+                        destination: destination,
+                        budget: 0,
+                        travelers: 1
+                    },
+                    itinerary: {
+                        destination: destination,
+                        duration: '3 days',
+                        total_cost: 0
+                    },
+                    transportation: [],
+                    accommodation: [],
+                    activities: []
+                };
                 aiSummary = 'Trip plan generated successfully!';
             }
             
-            // Update header
-            const actualDestination = tripData.request?.destination || tripData.itinerary?.destination || destination;
+            console.log('📊 Processed tripData:', tripData);
+            
+            // Update header - use multiple fallback sources
+            const actualDestination = 
+                tripData.request?.destination || 
+                tripData.itinerary?.destination || 
+                data.trip_overview?.destination || 
+                destination;
+            
+            const duration = 
+                tripData.itinerary?.duration || 
+                data.trip_overview?.duration || 
+                'Multi-day trip';
+                
             document.getElementById('resultsTitle').textContent = `🎉 ${actualDestination} Travel Plan`;
-            document.getElementById('resultsSubtitle').textContent = 
-                `${startDate} to ${endDate} | ${tripData.itinerary?.duration || 'Multi-day trip'}`;
+            document.getElementById('resultsSubtitle').textContent = `${startDate} to ${endDate} | ${duration}`;
             
             // Generate HTML content
-            resultsContent.innerHTML = generateResultsHTML(tripData, aiSummary);
+            console.log('🏗️ Generating HTML content');
+            const htmlContent = generateResultsHTML(tripData, aiSummary);
+            resultsContent.innerHTML = htmlContent;
             
             // Show results
             resultsSection.style.display = 'block';
             resultsSection.scrollIntoView({ behavior: 'smooth' });
+            console.log('✅ Results displayed successfully');
         }
 
         function generateResultsHTML(trip, aiSummary) {
+            // Extract values with safe fallbacks
+            const destination = trip.request?.destination || trip.itinerary?.destination || 'Unknown Destination';
+            const duration = trip.itinerary?.duration || '3 days';
+            const durationNum = duration.split(' ')[0] || '3';
+            const travelers = trip.request?.travelers || 1;
+            const totalCost = trip.itinerary?.total_cost || 0;
+            
             return `
                 <!-- Trip Overview -->
                 <div class="trip-overview">
@@ -605,18 +694,18 @@
                     <div class="overview-grid">
                         <div class="overview-item">
                             <h3>📍</h3>
-                            <p>${trip.request.destination}</p>
+                            <p>${destination}</p>
                         </div>
                         <div class="overview-item">
-                            <h3>${trip.itinerary.duration.split(' ')[0]}</h3>
+                            <h3>${durationNum}</h3>
                             <p>Days</p>
                         </div>
                         <div class="overview-item">
-                            <h3>${trip.request.travelers}</h3>
-                            <p>Traveler${trip.request.travelers > 1 ? 's' : ''}</p>
+                            <h3>${travelers}</h3>
+                            <p>Traveler${travelers > 1 ? 's' : ''}</p>
                         </div>
                         <div class="overview-item">
-                            <h3>$${trip.itinerary.total_cost}</h3>
+                            <h3>$${totalCost}</h3>
                             <p>Total Cost</p>
                         </div>
                     </div>
@@ -625,14 +714,14 @@
                 <!-- Transportation -->
                 <div class="section">
                     <h2>✈️ Transportation</h2>
-                    ${trip.transportation.map(transport => `
+                    ${(trip.transportation || []).map(transport => `
                         <div class="card">
                             <h3>Flight Details</h3>
-                            <p><strong>Flight ID:</strong> ${transport.id}</p>
-                            <p><strong>Duration:</strong> ${transport.duration}</p>
-                            <p><strong>Departure:</strong> ${transport.departure}</p>
-                            <p><strong>Arrival:</strong> ${transport.arrival}</p>
-                            <div class="price-tag">$${transport.price}</div>
+                            <p><strong>Flight ID:</strong> ${transport.id || 'N/A'}</p>
+                            <p><strong>Duration:</strong> ${transport.duration || 'N/A'}</p>
+                            <p><strong>Departure:</strong> ${transport.departure || 'N/A'}</p>
+                            <p><strong>Arrival:</strong> ${transport.arrival || 'N/A'}</p>
+                            <div class="price-tag">$${transport.price || 0}</div>
                         </div>
                     `).join('')}
                 </div>
@@ -640,12 +729,12 @@
                 <!-- Accommodation -->
                 <div class="section">
                     <h2>🏨 Accommodation</h2>
-                    ${trip.accommodation.map(hotel => `
+                    ${(trip.accommodation || []).map(hotel => `
                         <div class="card">
-                            <h3>${hotel.name}</h3>
-                            <p><strong>Hotel ID:</strong> ${hotel.id}</p>
-                            <p><strong>Rating:</strong> <span class="rating">⭐ ${hotel.rating}/5</span></p>
-                            <div class="price-tag">$${hotel.price} per night</div>
+                            <h3>${hotel.name || 'Unknown Hotel'}</h3>
+                            <p><strong>Hotel ID:</strong> ${hotel.id || 'N/A'}</p>
+                            <p><strong>Rating:</strong> <span class="rating">⭐ ${hotel.rating || 0}/5</span></p>
+                            <div class="price-tag">$${hotel.price || 0} per night</div>
                         </div>
                     `).join('')}
                 </div>
@@ -654,12 +743,12 @@
                 <div class="section">
                     <h2>🎯 Activities</h2>
                     <div class="card-grid">
-                        ${trip.activities.map(activity => `
+                        ${(trip.activities || []).map(activity => `
                             <div class="card">
-                                <h3>${activity.name}</h3>
-                                <p><strong>Location:</strong> ${activity.location}</p>
-                                <p><strong>Rating:</strong> <span class="rating">⭐ ${activity.rating}/5</span></p>
-                                <div class="price-tag">$${activity.price}</div>
+                                <h3>${activity.name || 'Activity'}</h3>
+                                <p><strong>Location:</strong> ${activity.location || 'N/A'}</p>
+                                <p><strong>Rating:</strong> <span class="rating">${activity.rating || '⭐ 0/5'}</span></p>
+                                <div class="price-tag">${activity.price?.toString().startsWith('$') ? activity.price : '$' + (activity.price || 0)}</div>
                             </div>
                         `).join('')}
                     </div>
@@ -668,26 +757,49 @@
                 <!-- Daily Itinerary -->
                 <div class="section">
                     <h2>📅 Daily Itinerary</h2>
-                    ${trip.itinerary.daily_plan.map((day, index) => `
-                        <div class="itinerary-day">
-                            <div class="day-header">
-                                <h3>Day ${index + 1} - ${day.day_name}, ${day.date}</h3>
-                            </div>
-                            ${day.activities.map(activity => `
-                                <div class="activity">
-                                    <div class="activity-time">🕙 ${activity.time}</div>
-                                    <p><strong>${activity.activity}</strong></p>
-                                    <p>📍 ${activity.location} | 💰 $${activity.price}</p>
+                    ${(() => {
+                        // Use daily_plan from trip.itinerary or daily_schedule from trip directly
+                        const dailyPlan = trip.itinerary?.daily_plan || trip.daily_plan || [];
+                        return dailyPlan.map((day, index) => `
+                            <div class="itinerary-day">
+                                <div class="day-header">
+                                    <h3>Day ${index + 1} - ${day.day_name || day.day || 'Day'}, ${day.date || 'Date'}</h3>
                                 </div>
-                            `).join('')}
-                        </div>
-                    `).join('')}
+                                ${(() => {
+                                    // Handle both activity formats:
+                                    // 1. Array of activity objects: [{time: "10:00", activity: "Tour", location: "Place", price: 25}]
+                                    // 2. Array of activity strings: ["10:00 - Tour at Place ($25)"]
+                                    const activities = day.activities || [];
+                                    return activities.map(activity => {
+                                        if (typeof activity === 'string') {
+                                            // Parse string format: "10:00 - Tour at Place ($25)"
+                                            return `
+                                                <div class="activity">
+                                                    <div class="activity-time">🕙 ${activity.split(' - ')[0] || 'Time'}</div>
+                                                    <p><strong>${activity.split(' - ')[1] || activity}</strong></p>
+                                                </div>
+                                            `;
+                                        } else {
+                                            // Use object format
+                                            return `
+                                                <div class="activity">
+                                                    <div class="activity-time">🕙 ${activity.time || 'Time'}</div>
+                                                    <p><strong>${activity.activity || 'Activity'}</strong></p>
+                                                    <p>📍 ${activity.location || 'Location'} | 💰 $${activity.price || 0}</p>
+                                                </div>
+                                            `;
+                                        }
+                                    }).join('');
+                                })()}
+                            </div>
+                        `);
+                    })().join('')}
                 </div>
 
                 <!-- Total Cost -->
                 <div class="total-cost">
-                    💰 Total Trip Cost: $${trip.itinerary.total_cost}
-                    <br><small>Within your $${trip.request.budget} budget!</small>
+                    💰 Total Trip Cost: $${trip.itinerary?.total_cost || 0}
+                    <br><small>Budget: $${trip.request?.budget || 'N/A'}</small>
                 </div>
 
                 <!-- AI Summary -->

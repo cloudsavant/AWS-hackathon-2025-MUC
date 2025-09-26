@@ -62,26 +62,51 @@ class TravelPlannerHandler(SimpleHTTPRequestHandler):
                 # Parse the output as JSON
                 try:
                     logger.info("agentcore raw output: %s", result.stdout)
-                    response_data = json.loads(result.stdout)
-                    logger.info("Parsed response successfully")
-                    self.send_json_response(response_data)
-                except json.JSONDecodeError as e:
-                    logger.error("Failed to parse agentcore output as JSON: %s", e)
-                    logger.error("Raw output: %s", result.stdout)
-                    # Try to extract JSON from the output if it's mixed with other text
+                    
+                    # First try to parse as direct JSON
                     try:
-                        # Look for JSON in the output
-                        import re
-                        json_match = re.search(r'\{.*\}', result.stdout, re.DOTALL)
-                        if json_match:
-                            json_str = json_match.group(0)
+                        response_data = json.loads(result.stdout)
+                        logger.info("Parsed response as direct JSON successfully")
+                        self.send_json_response(response_data)
+                        return
+                    except json.JSONDecodeError:
+                        pass
+                    
+                    # Extract JSON from agentcore decorated output
+                    # Look for "Response:" followed by JSON
+                    import re
+                    
+                    # Try to find JSON after "Response:" marker
+                    response_match = re.search(r'Response:\s*(\{.*\})', result.stdout, re.DOTALL)
+                    if response_match:
+                        json_str = response_match.group(1).strip()
+                        try:
+                            response_data = json.loads(json_str)
+                            logger.info("Successfully extracted JSON from agentcore response")
+                            self.send_json_response(response_data)
+                            return
+                        except json.JSONDecodeError:
+                            pass
+                    
+                    # Fallback: Look for any JSON-like structure
+                    json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', result.stdout, re.DOTALL)
+                    if json_match:
+                        json_str = json_match.group(0)
+                        try:
                             response_data = json.loads(json_str)
                             logger.info("Successfully extracted JSON from mixed output")
                             self.send_json_response(response_data)
                             return
-                    except (json.JSONDecodeError, AttributeError):
-                        pass
-                    self.send_json_error("Invalid JSON response from agent: " + str(e), 500)
+                        except json.JSONDecodeError:
+                            pass
+                    
+                    # If all else fails, return error
+                    logger.error("Could not extract valid JSON from agentcore output")
+                    self.send_json_error("Could not parse JSON from agent response", 500)
+                    
+                except Exception as e:
+                    logger.error("Unexpected error parsing agentcore output: %s", e)
+                    self.send_json_error("Error parsing agent response: " + str(e), 500)
                 
             except subprocess.TimeoutExpired:
                 logger.error("agentcore command timed out")

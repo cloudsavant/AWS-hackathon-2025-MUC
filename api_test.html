@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>🧪 API Test Page</h1>
+    <button onclick="testAPI()">Test API</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            console.log('🧪 Testing API...');
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                resultDiv.innerHTML = '⏳ Testing...';
+                
+                const response = await fetch('/api/generate-plan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: 'Plan a test trip to Paris'
+                    })
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                resultDiv.innerHTML = `
+                    <h3>✅ API Test Result</h3>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Data Status:</strong> ${data.status}</p>
+                    <p><strong>Destination:</strong> ${data.trip_overview?.destination || 'N/A'}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+
+            } catch (error) {
+                console.error('API test error:', error);
+                resultDiv.innerHTML = `
+                    <h3>❌ API Test Failed</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

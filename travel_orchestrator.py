@@ -22,6 +22,7 @@ class TravelOrchestratorAgent:
     
     def __init__(self):
         self.bedrock_client = boto3.client('bedrock-runtime', region_name='us-west-2')
+        self.model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
         
     def parse_trip_request(self, user_input: str) -> Dict[str, Any]:
         """Parse user input into structured trip request"""
@@ -40,6 +41,7 @@ class TravelOrchestratorAgent:
             "travelers": number
         }}
         """
+        # TODO - LLM call to Bedrock
         
         # For now, use a simple parser (in production, use Bedrock)
         return {
@@ -132,6 +134,70 @@ class TravelOrchestratorAgent:
             "total_cost": flight_cost + hotel_cost + activity_cost,
             "daily_plan": days
         }
+    
+    def generate_ai_summary(self, trip_plan_data: Dict[str, Any], user_input: str) -> str:
+        """Use Bedrock LLM to generate a natural language summary of the trip plan"""
+        try:
+            # Extract key information for the prompt
+            destination = trip_plan_data["trip_plan"]["request"]["destination"]
+            duration = trip_plan_data["trip_plan"]["itinerary"]["duration"]
+            total_cost = trip_plan_data["trip_plan"]["itinerary"]["total_cost"]
+            budget = trip_plan_data["trip_plan"]["request"]["budget"]
+            interests = ", ".join(trip_plan_data["trip_plan"]["request"]["interests"])
+            activities = [act["name"] for act in trip_plan_data["trip_plan"]["activities"]]
+            hotel = trip_plan_data["trip_plan"]["accommodation"][0]["name"]
+            
+            # Create a comprehensive prompt for the LLM
+            prompt = f"""You are a friendly and professional travel agent. Based on the trip planning data below, create an engaging and personalized travel summary for the customer.
+
+User's Original Request: "{user_input}"
+
+Trip Details:
+- Destination: {destination}
+- Duration: {duration}
+- Budget: ${budget}
+- Total Estimated Cost: ${total_cost}
+- Interests: {interests}
+- Hotel: {hotel}
+- Activities planned: {', '.join(activities)}
+
+Please write a warm, enthusiastic, and informative summary that:
+1. Acknowledges their specific interests and budget
+2. Highlights the exciting experiences they'll have
+3. Mentions the great value (cost vs budget)
+4. Creates excitement about their upcoming trip
+5. Keep it concise but engaging (2-3 paragraphs)
+
+Write in a friendly, professional tone as if you're personally excited to help them plan this amazing trip."""
+
+            # Prepare the request for Bedrock
+            request_body = {
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 300,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            }
+            
+            # Call Bedrock
+            response = self.bedrock_client.invoke_model(
+                modelId=self.model_id,
+                body=json.dumps(request_body)
+            )
+            
+            # Parse response
+            response_body = json.loads(response['body'].read())
+            ai_summary = response_body['content'][0]['text']
+            
+            return ai_summary
+            
+        except Exception as e:
+            # Fallback to basic message if LLM call fails
+            print(f"LLM call failed: {e}")
+            return f"Generated complete trip plan for {trip_plan_data['trip_plan']['request']['destination']} ({trip_plan_data['trip_plan']['itinerary']['duration']}). Total estimated cost: ${trip_plan_data['trip_plan']['itinerary']['total_cost']}"
 
 # Create agent instance
 orchestrator = TravelOrchestratorAgent()
@@ -160,6 +226,15 @@ def invoke_handler(payload):
             },
             "message": f"Generated complete trip plan for {itinerary['destination']} ({itinerary['duration']}). Total estimated cost: ${itinerary['total_cost']}"
         }
+        
+        # Step 4: Generate AI-powered natural language summary using Bedrock
+        try:
+            ai_summary = orchestrator.generate_ai_summary(response, user_input)
+            response["ai_summary"] = ai_summary
+            print(f"✅ AI Summary generated successfully")
+        except Exception as e:
+            print(f"⚠️ AI Summary generation failed: {e}")
+            # Continue with basic response
         
         return response
         

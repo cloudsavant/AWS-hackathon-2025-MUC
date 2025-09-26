@@ -1,0 +1,31 @@
+╭────────────────────────────────────── travel_orchestrator ──────────────────────────────────────╮
+│ Session: f42784f2-0f1d-4d01-b69e-1839ff0611b7                                                   │
+│ Request ID: c7d685a1-2bf4-40fe-bf85-d9e72be766c5                                                │
+│ ARN: arn:aws:bedrock-agentcore:us-west-2:362485256406:runtime/travel_orchestrator-BVUvNxBN5c    │
+│ Logs: aws logs tail /aws/bedrock-agentcore/runtimes/travel_orchestrator-BVUvNxBN5c-DEFAULT      │
+│ --log-stream-name-prefix "2025/09/26/[runtime-logs]" --follow                                   │
+│       aws logs tail /aws/bedrock-agentcore/runtimes/travel_orchestrator-BVUvNxBN5c-DEFAULT      │
+│ --log-stream-name-prefix "2025/09/26/[runtime-logs]" --since 1h                                 │
+│ GenAI Dashboard:                                                                                │
+│ https://console.aws.amazon.com/cloudwatch/home?region=us-west-2#gen-ai-observability/agent-core │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+Response:
+{"trip_plan": {"request": {"destination": "Munich, Germany", "start_date": "2024-10-01", 
+"end_date": "2024-10-03", "budget": 800, "interests": ["history", "beer", "Oktoberfest"], 
+"travelers": 1}, "transportation": [{"id": "flight_001", "price": 450, "duration": "2h 30m", 
+"departure": "10:30", "arrival": "13:00"}], "accommodation": [{"id": "hotel_001", "name": "Munich 
+City Hotel", "price": 120, "rating": 4.2}], "activities": [{"id": "act_001", "name": "Marienplatz 
+Historical Tour", "price": 25, "location": "Marienplatz", "rating": 4.6}, {"id": "act_002", "name":
+"Hofbräu Beer Garden", "price": 15, "location": "Hofbräu München", "rating": 4.4}], "itinerary": 
+{"destination": "Munich, Germany", "duration": "3 days", "total_cost": 930, "daily_plan": [{"date":
+"2024-10-01", "day_name": "Tuesday", "activities": [{"time": "10:00", "activity": "Marienplatz 
+Historical Tour", "location": "Marienplatz", "price": 25}, {"time": "14:00", "activity": "Hofbräu 
+Beer Garden", "location": "Hofbräu München", "price": 15}]}, {"date": "2024-10-02", "day_name": 
+"Wednesday", "activities": [{"time": "10:00", "activity": "Marienplatz Historical Tour", 
+"location": "Marienplatz", "price": 25}, {"time": "14:00", "activity": "Hofbräu Beer Garden", 
+"location": "Hofbräu München", "price": 15}]}, {"date": "2024-10-03", "day_name": "Thursday", 
+"activities": [{"time": "10:00", "activity": "Marienplatz Historical Tour", "location": 
+"Marienplatz", "price": 25}, {"time": "14:00", "activity": "Hofbräu Beer Garden", "location": 
+"Hofbräu München", "price": 15}]}]}}, "message": "Generated complete trip plan for Munich, Germany 
+(3 days). Total estimated cost: $930"}
